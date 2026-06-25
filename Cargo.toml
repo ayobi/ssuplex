@@ -1,0 +1,41 @@
+[package]
+name = "ssuplex"
+version = "0.1.0"
+edition = "2021"
+authors = ["Aaron O'Brien <aaron.obrien@unab.cl>"]
+license = "MIT"
+description = "Fast Rust preprocessor for rRNA-marker eDNA workflows: extracts SSU rRNA from environmental sequencing reads and sorts them by origin (bacterial, archaeal, eukaryotic, mitochondrial, chloroplast)."
+repository = "https://github.com/ayobi/ssuplex"
+homepage = "https://github.com/ayobi/ssuplex"
+keywords = ["bioinformatics", "edna", "rrna", "metabarcoding", "amplicon"]
+categories = ["command-line-utilities", "science"]
+readme = "README.md"
+
+[[bin]]
+name = "ssuplex"
+path = "src/main.rs"
+
+[lib]
+name = "ssuplex"
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+noodles-fasta = "0.49"
+rayon = "1.10"
+anyhow = "1.0"
+thiserror = "1.0"
+indicatif = "0.17"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tempfile = "3.10"
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
