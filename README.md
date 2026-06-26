@@ -119,15 +119,15 @@ triplicate with <2% variance.
 | 200,000 | 1 m 49 s | 6 m 07 s       | 3.4×    | 1.58 GB          | 2.45 GB          |
 
 At small inputs the two are comparable; the gap widens with scale, reaching
-~3.4× at 200,000 reads (and still widening), while SSUplex uses ~35% less memory
-— and does so occupying fewer CPU cores (~4 vs ~6.5). This 50k–500k read range
+~3.4× at 200,000 reads (and still widening), while SSUplex uses ~35% less memory, 
+and does so occupying fewer CPU cores (~4 vs ~6.5). This 50k–500k read range
 is typical of per-sample amplicon sequencing. Note this compares extraction
-only; Metaxa2's full pipeline additionally runs BLAST classification, which
+only... Metaxa2's full pipeline additionally runs BLAST classification, which
 SSUplex omits by design.
 
 **Threading and memory notes.** SSUplex parallelises across the five origin
 profiles, so multithreading delivers roughly a 3–4× speedup and saturates around
-four threads — requesting more does not help. Memory scales with read count
+four threads, requesting more does not help! Memory scales with read count
 (sequences are indexed in memory), which is comfortable at amplicon scale but
 would be the limiting factor for very large (multi-million-read) metagenomes;
 streamed input is on the roadmap.
@@ -168,7 +168,7 @@ The **bacteria-vs-mitochondria** boundary is its lower-confidence edge :(
 Mitochondrial SSU is alpha-proteobacterial in origin, so on noisy reads the two
 are genuinely close, and the winner depends on region-inclusion details that no
 single HMM-score statistic resolves cleanly. Metaxa2 disambiguates these reads
-with a second BLAST classification stage; SSUplex does not (by design — that
+with a second BLAST classification stage; SSUplex does not (by design.. that
 stage is the main runtime cost). Treat mitochondrial vs bacterial calls on noisy
 data as lower-confidence, and prefer the default `mean` when mitochondrial
 signal matters.
@@ -183,7 +183,7 @@ via `dev/compare_origins.py`. Public ONT data is streamed from ENA (e.g.
 
 ## Roadmap
 
-- [x] v0.1 — parallel SSU extraction, both-strand (`nhmmer`), origin classification, benchmark harness
+- [x] v0.1: parallel SSU extraction, both-strand (`nhmmer`), origin classification, benchmark harness
 - [ ] updated archaeal HMM panel (GTDB / KSGP+) for DPANN / Asgardarchaeota / Thermoplasmatota recovery
 - [ ] ambiguous-read classification cross-check (lightweight mapping tie-breaker for the bacteria/mito boundary)
 - [ ] streamed input for multi-million-read metagenomes
