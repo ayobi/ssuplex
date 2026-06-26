@@ -199,6 +199,7 @@ pub fn debug_score_table(reads: &[IndexedRead], hits: &[HmmHit]) -> Vec<DebugSco
 ///     regions while the true origin has MORE regions at a slightly lower mean.
 ///   * `Sum` and `Count` weight breadth and should recover those reads, but may
 ///     over-favour bacteria on true organelle reads.
+///
 /// Do not hard-code one metric or change the default without re-running both
 /// benchmarks; record the numbers when you do.
 ///
