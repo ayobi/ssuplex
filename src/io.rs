@@ -10,6 +10,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 
 use anyhow::{Context, Result};
+use flate2::read::GzDecoder;
 use noodles_fasta as fasta;
 
 /// A single input read held in memory.
@@ -21,14 +22,13 @@ pub struct IndexedRead {
 
 /// Read a FASTA file fully into memory.
 ///
-/// Supports `.fasta`, `.fa`, `.fna`, and gzipped variants (`.gz`) — the latter
-/// transparently via the standard `flate2` crate path inside noodles.
+/// Supports `.fasta`, `.fa`, `.fna`, and their gzipped (`.gz`) variants, which
+/// are decompressed on the fly with `flate2`.
 pub fn index_fasta(path: &Path) -> Result<Vec<IndexedRead>> {
+    let file = File::open(path).with_context(|| format!("opening {}", path.display()))?;
     let reader: Box<dyn Read> = if has_gz_extension(path) {
-        let file = File::open(path).with_context(|| format!("opening {}", path.display()))?;
-        Box::new(flate2_passthrough(file)?)
+        Box::new(GzDecoder::new(file))
     } else {
-        let file = File::open(path).with_context(|| format!("opening {}", path.display()))?;
         Box::new(file)
     };
 
@@ -50,13 +50,6 @@ fn has_gz_extension(path: &Path) -> bool {
     path.extension().and_then(|s| s.to_str()) == Some("gz")
 }
 
-/// Hook for gzip support. Kept as a stub here so the dependency surface stays
-/// small until we actually need it; flip to `flate2::read::GzDecoder` when
-/// adding gzipped-input support.
-fn flate2_passthrough(_file: File) -> Result<File> {
-    anyhow::bail!("gzipped FASTA input is not yet supported in v0.1 — please decompress first")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -72,5 +65,23 @@ mod tests {
         assert_eq!(reads[0].id, "read1");
         assert_eq!(reads[0].sequence, "ACGTACGT");
         assert_eq!(reads[1].id, "read2");
+    }
+
+    #[test]
+    fn reads_gzipped_fasta() {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+        let f = tempfile::Builder::new()
+            .suffix(".fasta.gz")
+            .tempfile()
+            .unwrap();
+        let mut enc = GzEncoder::new(f.reopen().unwrap(), Compression::default());
+        enc.write_all(b">g1\nACGTACGT\n>g2\nTTTTGGGG\n").unwrap();
+        enc.finish().unwrap();
+        let reads = index_fasta(f.path()).unwrap();
+        assert_eq!(reads.len(), 2);
+        assert_eq!(reads[0].id, "g1");
+        assert_eq!(reads[0].sequence, "ACGTACGT");
+        assert_eq!(reads[1].sequence, "TTTTGGGG");
     }
 }

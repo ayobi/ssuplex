@@ -81,6 +81,54 @@ on `$PATH`:
 conda install -c bioconda hmmer
 ```
 
+### HMM profiles
+
+SSUplex needs one HMM profile per origin — `bacteria.hmm`, `archaea.hmm`,
+`eukaryota.hmm`, `mitochondria.hmm`, `chloroplast.hmm` — in a directory passed
+with `--hmm-dir` (default: `./hmms`). These are **not** bundled with SSUplex:
+they are built from the [Metaxa2](https://microbiology.se/software/metaxa2/) SSU
+profile database, which carries its own license, so you assemble them once from a
+Metaxa2 download. You do not need a working Metaxa2 install — only its profiles.
+
+Download and unpack the Metaxa2 package:
+
+```bash
+curl -L -O https://microbiology.se/sw/Metaxa2_2.2.3.tar.gz
+tar xzf Metaxa2_2.2.3.tar.gz
+```
+
+Assemble the five origin files into `hmms/` with the helper script. It reads
+`<metaxa2_db>/SSU/HMMs/`, buckets the profiles by origin, folds Metaxa2's
+metazoan-mitochondrial (`N`) set into `mitochondria`, and prints what it did:
+
+```bash
+dev/assemble_metaxa2_hmms.sh Metaxa2_2.2.3/metaxa2_db hmms
+```
+
+The script uses `mapfile` and associative arrays, so it needs **bash 4+**. macOS
+ships bash 3.2 — install a newer one (`brew install bash`) and run it explicitly:
+`$(brew --prefix)/bin/bash dev/assemble_metaxa2_hmms.sh Metaxa2_2.2.3/metaxa2_db hmms`.
+
+If you prefer not to run the script, the five files are just concatenations of
+Metaxa2's single-letter SSU profiles (`A`=archaea, `B`=bacteria, `C`=chloroplast,
+`E`=eukaryota, `M`=mitochondria, `N`=metazoan mitochondria):
+
+```bash
+SRC=Metaxa2_2.2.3/metaxa2_db/SSU/HMMs
+mkdir -p hmms
+cat "$SRC/B.hmm"              > hmms/bacteria.hmm
+cat "$SRC/A.hmm"              > hmms/archaea.hmm
+cat "$SRC/E.hmm"              > hmms/eukaryota.hmm
+cat "$SRC/M.hmm" "$SRC/N.hmm" > hmms/mitochondria.hmm
+cat "$SRC/C.hmm"              > hmms/chloroplast.hmm
+```
+
+Verify you have five non-empty files before running SSUplex:
+
+```bash
+ls -la hmms/
+```
+
 ## Quick start
 
 ```bash

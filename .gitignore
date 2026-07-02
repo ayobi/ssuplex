@@ -2,3 +2,8 @@
 bench_*/
 bench300/
 *.log
+
+# local benchmark/profile artifacts — do not commit
+Metaxa2_*.tar.gz
+Metaxa2_*/
+hmms/

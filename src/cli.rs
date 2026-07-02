@@ -62,7 +62,8 @@ pub struct Args {
     /// (`bacteria.hmm`, `archaea.hmm`, `eukaryota.hmm`,
     ///  `mitochondria.hmm`, `chloroplast.hmm`).
     ///
-    /// Defaults to the `hmms/` directory bundled with the binary.
+    /// Expects a directory of per-origin profiles built from the Metaxa2
+    /// SSU database; see the README ("HMM profiles") for how to assemble it.
     #[arg(long = "hmm-dir", value_name = "DIR", default_value = "hmms")]
     pub hmm_dir: PathBuf,
 

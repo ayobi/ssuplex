@@ -191,14 +191,16 @@ pub fn debug_score_table(reads: &[IndexedRead], hits: &[HmmHit]) -> Vec<DebugSco
 /// region on a true bacterial read, even though bacteria wins on breadth.
 ///
 /// DESIGN NOTE — choice of metric is empirical, not obvious, so it is exposed as
-/// `--rank` and evaluated against `dev/run_benchmark.sh` on BOTH the full-length
-/// reference set and the ZymoBIOMICS ONT mock:
-///   * `Mean` scored 50/50 on clean full-length reference reads, but on noisy
-///     real ONT reads it misroutes ~45% of bacteria to chloroplast/mito,
-///     because a wrong organelle origin often has a higher mean on FEWER
-///     regions while the true origin has MORE regions at a slightly lower mean.
-///   * `Sum` and `Count` weight breadth and should recover those reads, but may
-///     over-favour bacteria on true organelle reads.
+/// `--rank` and evaluated against `dev/run_benchmark.sh` on the full-length
+/// reference set, the ZymoBIOMICS ONT mock (bacteria-only truth), and a real
+/// plant-root ONT sample (rice, scored as concordance with Metaxa2):
+///   * `Mean` scores 96.8% on clean full-length reference reads and tracks
+///     Metaxa2 best on multi-origin data, but on the bacteria-only mock scores
+///     only 43.0%: a wrong organelle origin can have a higher mean over FEWER
+///     regions while true bacteria has MORE regions at a slightly lower mean.
+///   * `Sum` (95.6% / 95.9%) and `Count` (78.0% / 95.7%) weight breadth and
+///     recover those bacterial reads, but over-favour bacteria on true organelle
+///     reads (e.g. misrouting plant mitochondria).
 ///
 /// Do not hard-code one metric or change the default without re-running both
 /// benchmarks; record the numbers when you do.

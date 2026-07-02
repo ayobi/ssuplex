@@ -29,8 +29,8 @@ fn main() -> Result<()> {
         }
     }
 
-    // 1. Verify nhmmer is available on PATH.
-    hmm::ensure_nhmmer_available().context("nhmmer not found on PATH")?;
+    // 1. Verify nhmmer is available and runnable.
+    hmm::ensure_nhmmer_available()?;
 
     // 2. Discover HMM profiles for each origin.
     let profiles = hmm::load_origin_profiles(&args.hmm_dir).with_context(|| {
