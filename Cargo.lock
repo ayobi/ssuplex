@@ -684,6 +684,7 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
+ "flate2",
  "indicatif",
  "noodles-fasta",
  "predicates",
