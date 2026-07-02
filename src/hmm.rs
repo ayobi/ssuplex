@@ -47,17 +47,35 @@ pub struct OriginProfile {
     pub hmm_path: PathBuf,
 }
 
-/// Verify `nhmmer` is on the user's `$PATH`.
+/// Verify `nhmmer` is present and runnable.
+///
+/// Distinguishes not-on-`$PATH` from present-but-broken (e.g. an install missing
+/// a shared library) and surfaces the captured stderr so the cause is visible.
 pub fn ensure_nhmmer_available() -> Result<()> {
-    let output = Command::new("nhmmer")
-        .arg("-h")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .context("could not invoke nhmmer (is HMMER installed and on PATH?)")?;
+    let output = match Command::new("nhmmer").arg("-h").output() {
+        Ok(o) => o,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            bail!("nhmmer not found on PATH — install HMMER 3 (e.g. `conda install -c bioconda hmmer`) and ensure nhmmer is on your PATH");
+        }
+        Err(e) => return Err(e).context("could not invoke nhmmer"),
+    };
 
-    if !output.success() {
-        bail!("nhmmer returned a non-zero status on `-h`");
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stderr = stderr.trim();
+        let code = output
+            .status
+            .code()
+            .map(|c| c.to_string())
+            .unwrap_or_else(|| "terminated by signal".to_string());
+        bail!(
+            "nhmmer is on PATH but failed to run (exit {code}){}",
+            if stderr.is_empty() {
+                String::new()
+            } else {
+                format!(": {stderr}")
+            }
+        );
     }
     Ok(())
 }
