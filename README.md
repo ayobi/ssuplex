@@ -2,6 +2,15 @@
 
 **A fast, lightweight Rust preprocessor for rRNA-marker eDNA workflows.**
 
+[![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.07.02.736232-b31b1b)](https://doi.org/10.64898/2026.07.02.736232)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/ayobi/ssuplex/actions/workflows/ci.yml/badge.svg)](https://github.com/ayobi/ssuplex/actions/workflows/ci.yml)
+[![Rust](https://img.shields.io/badge/rust-1.74%2B-b7410e?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://anaconda.org/bioconda/ssuplex)
+[![Bioconda downloads](https://img.shields.io/conda/dn/bioconda/ssuplex.svg)](https://anaconda.org/bioconda/ssuplex)
+[![GitHub release](https://img.shields.io/github/v/release/ayobi/ssuplex)](https://github.com/ayobi/ssuplex/releases)
+[![last commit](https://img.shields.io/github/last-commit/ayobi/ssuplex)](https://github.com/ayobi/ssuplex/commits/main)
+
 SSUplex extracts small-subunit ribosomal RNA (SSU; 16S / 18S) sequences from
 environmental sequencing reads and sorts them by origin..bacterial, archaeal,
 eukaryotic, mitochondrial, or chloroplast! soo each pile can be routed to the
