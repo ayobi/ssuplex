@@ -5,7 +5,7 @@
 //! for real sequencing reads (e.g. ONT) that arrive in mixed orientation. The
 //! wrapper:
 //! 1. Discovers per-origin `.hmm` profile files in a directory
-//! 2. Streams query sequences into temporary FASTA files in chunks
+//! 2. Writes the in-memory reads to temporary FASTA files in chunks
 //! 3. Invokes `nhmmer --tblout` per (chunk, profile)
 //! 4. Parses the `--tblout` table into [`HmmHit`] structs
 

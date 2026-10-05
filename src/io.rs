@@ -1,9 +1,8 @@
 //! Input I/O — read FASTA into an in-memory index.
 //!
-//! For v0.1 we index the input fully into memory. This keeps the rest of the
-//! pipeline simple (chunks are slices, parallelism is straightforward). For
-//! very large inputs (> ~50M reads) a future iteration can switch to a true
-//! streaming model with on-disk read storage.
+//! The whole input is held in memory, which keeps the pipeline simple (chunks
+//! are slices and parallelism is straightforward). Peak memory therefore
+//! grows with the number and length of input reads.
 
 use std::fs::File;
 use std::io::{BufReader, Read};

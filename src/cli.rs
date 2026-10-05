@@ -2,54 +2,34 @@ use std::path::PathBuf;
 
 use clap::{Parser, ValueEnum};
 
-/// How to rank candidate origins from their per-region HMM hits.
+/// How to rank candidate origins from a read's per-region HMM hits.
 ///
-/// Chosen empirically against two benchmarks (`dev/run_benchmark.sh`): a
-/// full-length Metaxa2 reference set and the ZymoBIOMICS ONT mock, plus a real
-/// plant-root ONT sample (rice, PRJNA992961) scored as concordance with Metaxa2:
-///
-/// ```text
-///            reference    Zymo (bacteria)   rice (multi-origin, vs Metaxa2)
-///   Mean       96.8%           43.0%        tracks Metaxa2 best (mito/chloro)
-///   Sum        95.6%           95.9%        misroutes plant mitochondria
-///   Count      78.0%           95.7%        over-collapses to bacteria
-/// ```
-///
-/// `Mean` is the default: it tracks Metaxa2 most faithfully on multi-origin
-/// data, where it recovers the plant-mitochondrial and chloroplast fractions
-/// that `Sum`/`Count` push to bacteria. On bacteria-only samples (mocks, many
-/// gut/soil datasets) `Sum` scores higher because piling on bacteria's many
-/// conserved regions can't be wrong when everything is bacterial — so `--rank
-/// sum` is offered for that case.
-///
-/// HONEST LIMIT: the bacteria-vs-mitochondria call cannot be made robustly from
-/// HMM region scores alone (mito SSU is alpha-proteobacterial-derived). On noisy
-/// reads the two are genuinely close and the winner depends on region-inclusion
-/// details no single statistic resolves cleanly; Metaxa2 leans on a second BLAST
-/// stage there, which SSUplex does not have. SSUplex is therefore strong
-/// and fast on bacterial and chloroplast origin assignment, and flags the
-/// bacteria/mitochondria boundary as its lower-confidence edge.
+/// For each origin, a read's hits (at most one per conserved-region profile)
+/// are summarised as a region count, a summed bit score and a mean bit score.
+/// These mirror Metaxa2's `--selection_priority` options `domains`, `sum` and
+/// `score` (Metaxa2's default is `score`, the mean), except that Metaxa2
+/// divides its sum by the number of profiles in the origin's set and SSUplex
+/// does not. How the three compare on benchmark data is documented in
+/// `dev/BENCHMARK.md`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, ValueEnum)]
 pub enum RankMetric {
-    /// Mean per-region bit score (region count breaks ties). Default; tracks
-    /// Metaxa2 best on multi-origin data.
+    /// Mean per-region bit score; region count breaks ties (default)
     Mean,
-    /// Sum of per-region bit scores — total weight of evidence. Stronger on
-    /// bacteria-dominated samples; misroutes organelle reads to bacteria.
+    /// Summed per-region bit score; region count breaks ties
     Sum,
-    /// Number of distinct conserved regions matched (mean score breaks ties).
-    /// Over-favours the broadest (bacterial) profile.
+    /// Number of matched conserved regions; mean bit score breaks ties
     Count,
 }
 
 /// Fast preprocessor for rRNA-marker eDNA workflows. Extracts SSU rRNA
 /// sequences from environmental reads and sorts them by origin (bacterial,
 /// archaeal, eukaryotic, mitochondrial, chloroplast) for downstream
-/// taxonomic classification. A Rust reimplementation of Metaxa2.
+/// taxonomic classification. Reimplements the SSU extraction and
+/// origin-assignment step of Metaxa2 in Rust.
 #[derive(Parser, Debug, Clone)]
 #[command(name = "ssuplex", version, author, about)]
 pub struct Args {
-    /// Input FASTA of sequencing reads or contigs.
+    /// Input FASTA of sequencing reads or contigs (optionally gzip-compressed).
     #[arg(short = 'i', long = "input", value_name = "FASTA")]
     pub input: PathBuf,
 
@@ -75,24 +55,22 @@ pub struct Args {
     #[arg(short = 'E', long = "evalue", default_value_t = 1e-5)]
     pub evalue: f64,
 
-    /// Minimum bit score required for a read to be assigned to an origin.
-    /// Reads with no hit above this score are reported as `unclassified`.
+    /// Minimum mean per-region bit score the chosen origin must reach;
+    /// otherwise the read is reported as `unclassified`.
     #[arg(long = "min-score", default_value_t = 0.0)]
     pub min_score: f64,
 
-    /// Minimum number of distinct conserved regions (HMM query models) that
-    /// must match an origin for a read to be assigned to it. Metaxa2 uses 2,
-    /// which keeps the false-positive rate low; the default here is 1 so that
-    /// single-model profiles still work. Origins are ranked by mean per-region
-    /// bit score, so raising this mainly suppresses weak single-region calls.
+    /// Minimum number of conserved-region profiles that must match the chosen
+    /// origin; otherwise the read is reported as `unclassified`. (Metaxa2's
+    /// default is 2, accepting single-region hits only at E-value 1e-10 or
+    /// lower.)
     #[arg(long = "min-domains", default_value_t = 1)]
     pub min_domains: usize,
 
     /// Statistic used to rank candidate origins for each read: `mean` (mean
-    /// per-region bit score, the default), `sum` (total per-region bit score),
-    /// or `count` (number of matched regions). `mean` tracks Metaxa2 best on
-    /// multi-origin data; `sum` is stronger on bacteria-dominated samples. See
-    /// `RankMetric` for the benchmark evidence.
+    /// per-region bit score, the default), `sum` (summed per-region bit
+    /// score), or `count` (number of matched regions). See the README section
+    /// "Origin ranking".
     #[arg(long = "rank", value_enum, default_value_t = RankMetric::Mean)]
     pub rank: RankMetric,
 
@@ -107,9 +85,9 @@ pub struct Args {
     #[arg(long = "no-clip")]
     pub no_clip: bool,
 
-    /// Write a per-read, per-origin score table to `{prefix}.scores.tsv`
-    /// (read_id, origin, n_regions, mean, sum, best_evalue) for every origin
-    /// that matched at least one region. Diagnostic for tuning origin scoring.
+    /// Also write `{prefix}.scores.tsv` (per read and matched origin:
+    /// n_regions, mean, sum, best_evalue) and `{prefix}.regions.tsv` (every
+    /// per-region hit with score and coordinates), for diagnostics.
     #[arg(long = "debug-scores")]
     pub debug_scores: bool,
 

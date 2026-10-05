@@ -3,13 +3,13 @@
 //! Extracts SSU rRNA from environmental sequencing reads and sorts them by
 //! origin (bacterial, archaeal, eukaryotic, mitochondrial, chloroplast) so
 //! each can be routed to an appropriate downstream taxonomic classifier.
-//! A faithful, parallelised Rust reimplementation of Metaxa2's SSU
-//! extraction logic.
+//! Reimplements the SSU extraction and origin-assignment step of Metaxa2
+//! (without its BLAST-based taxonomic classification) in Rust.
 //!
 //! The library is organised around a small pipeline:
 //!
-//! 1. [`io`]      — stream FASTA reads from disk in chunks
-//! 2. [`hmm`]     — wrap `nhmmer` to scan each chunk against origin HMMs
+//! 1. [`io`]      — read FASTA (optionally gzipped) into memory
+//! 2. [`hmm`]     — run `nhmmer` on chunks of reads against the origin HMMs
 //! 3. [`origin`]  — call best origin per read from collected hits
 //! 4. [`extract`] — slice the SSU region out of each read using HMM coordinates
 //! 5. [`summary`] — write origin-sorted FASTAs, coordinate TSV, and run summary
