@@ -113,6 +113,11 @@ pub struct Args {
     #[arg(long = "debug-scores")]
     pub debug_scores: bool,
 
+    /// Replace output files left by a previous run with the same prefix.
+    /// Without this flag SSUplex stops instead of overwriting existing results.
+    #[arg(long = "force")]
+    pub force: bool,
+
     /// Increase logging verbosity. Repeat (`-vv`) for trace output.
     #[arg(short = 'v', long = "verbose", action = clap::ArgAction::Count)]
     pub verbose: u8,

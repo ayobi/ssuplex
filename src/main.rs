@@ -15,6 +15,22 @@ fn main() -> Result<()> {
     info!("output prefix: {}", args.output.display());
     info!("threads: {}", args.threads);
 
+    // Refuse to overwrite a previous run unless --force is given. The check
+    // runs before any work; with --force, old files are removed only once the
+    // new results are ready to be written.
+    let previous: Vec<_> = summary::output_paths(&args)
+        .into_iter()
+        .filter(|p| p.exists())
+        .collect();
+    if !previous.is_empty() && !args.force {
+        anyhow::bail!(
+            "output files for prefix {} already exist (e.g. {}); use a new --output \
+             prefix or pass --force to replace them",
+            args.output.display(),
+            previous[0].display()
+        );
+    }
+
     // Configure global rayon pool.
     rayon::ThreadPoolBuilder::new()
         .num_threads(args.threads)
@@ -41,12 +57,20 @@ fn main() -> Result<()> {
     })?;
     info!("loaded {} origin HMM profile(s)", profiles.len());
 
-    // 3. Stream input reads in chunks, scan each chunk, collect per-read hits.
+    // 3. Read all input sequences into memory, then scan them in chunks of
+    //    --chunk-size against every origin profile.
     let reads = io::index_fasta(&args.input)
         .with_context(|| format!("failed to read {}", args.input.display()))?;
     info!("indexed {} input sequence(s)", reads.len());
 
     let hits = hmm::scan_all(&reads, &profiles, &args)?;
+
+    if args.force {
+        for p in summary::output_paths(&args).iter().filter(|p| p.exists()) {
+            std::fs::remove_file(p)
+                .with_context(|| format!("failed to remove previous output {}", p.display()))?;
+        }
+    }
 
     if args.debug_scores {
         summary::write_debug_scores(&args, &reads, &hits)?;

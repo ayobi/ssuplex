@@ -89,6 +89,28 @@ pub fn write_debug_regions(args: &Args, hits: &[HmmHit]) -> Result<()> {
     Ok(())
 }
 
+/// Every file a run can write for `args.output`, in a fixed order. Used to
+/// refuse overwriting a previous run and, with `--force`, to clear its files
+/// (including per-origin FASTAs and debug tables the new run may not write).
+pub fn output_paths(args: &Args) -> Vec<PathBuf> {
+    let mut paths: Vec<PathBuf> = Origin::ALL
+        .iter()
+        .copied()
+        .chain(std::iter::once(Origin::Unclassified))
+        .map(|o| fasta_path_for(&args.output, o))
+        .collect();
+    for suffix in ["extraction.tsv", "summary.txt", "scores.tsv", "regions.tsv"] {
+        let mut p = args.output.clone();
+        let stem = p
+            .file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "ssuplex".to_string());
+        p.set_file_name(format!("{stem}.{suffix}"));
+        paths.push(p);
+    }
+    paths
+}
+
 fn fasta_path_for(prefix: &Path, origin: Origin) -> PathBuf {
     let mut p = prefix.to_path_buf();
     let stem = p
