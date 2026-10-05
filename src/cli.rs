@@ -47,8 +47,13 @@ pub struct Args {
     #[arg(long = "hmm-dir", value_name = "DIR", default_value = "hmms")]
     pub hmm_dir: PathBuf,
 
-    /// Number of worker threads.
-    #[arg(short = 't', long = "threads", default_value_t = num_cpus_default())]
+    /// Number of worker threads [default: number of available CPUs]
+    #[arg(
+        short = 't',
+        long = "threads",
+        default_value_t = num_cpus_default(),
+        hide_default_value = true
+    )]
     pub threads: usize,
 
     /// HMMER E-value cutoff for `nhmmer`.
