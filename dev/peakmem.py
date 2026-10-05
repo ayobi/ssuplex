@@ -9,6 +9,10 @@ Peak memory is reported two ways:
                the number /usr/bin/time reports, and it undercounts tools that
                run several processes at the same time
 
+Both include the memory of the Python process that launches the command (the
+kernel keeps the fork's high-water mark across exec), so values below about
+20 MB measure this script rather than the tool. Benchmark runs are far larger.
+
 Prints one tab-separated line: wall_s tree_rss_mb max_rss_mb cpu_s exit_code
 
 Usage: peakmem.py [--interval 0.05] [--log FILE] -- command [args ...]
