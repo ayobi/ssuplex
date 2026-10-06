@@ -103,7 +103,11 @@ ssuplex -i Metaxa2_2.2.3/test.fasta -o quickstart/test --hmm-dir hmms --threads 
 cat quickstart/test.summary.txt
 ```
 
-The log should end with `classified 50 of 100 read(s) to an origin`. Running
+The log should end with `classified 50 of 100 read(s) to an origin`. With
+HMMER 3.4 and default settings, the 50 SSU sequences are assigned 12 to
+bacteria, 10 each to archaea and eukaryota, and 9 each to mitochondria and
+chloroplast: one mitochondrial and one chloroplast sequence end up as bacteria
+(see [Origin ranking](#origin-ranking)). Running
 again with the same `-o` prefix stops with an error instead of overwriting the
 results; add `--force` to replace them.
 
@@ -143,7 +147,7 @@ Options:
   -E, --evalue <EVALUE>            HMMER E-value cutoff for `nhmmer` [default: 0.00001]
       --min-score <MIN_SCORE>      Minimum mean per-region bit score the chosen origin must reach; otherwise the read is reported as `unclassified` [default: 0]
       --min-domains <MIN_DOMAINS>  Minimum number of conserved-region profiles that must match the chosen origin; otherwise the read is reported as `unclassified`. (Metaxa2's default is 2, accepting single-region hits only at E-value 1e-10 or lower.) [default: 1]
-      --rank <RANK>                Statistic used to rank candidate origins for each read: `mean` (mean per-region bit score, the default), `sum` (summed per-region bit score), or `count` (number of matched regions). See the README section "Origin ranking" [default: mean] [possible values: mean, sum, count]
+      --rank <RANK>                Statistic used to rank candidate origins for each read: `sum` (summed per-region bit score, the default), `mean` (mean per-region bit score), or `count` (number of matched regions). See the README section "Origin ranking" [default: sum] [possible values: mean, sum, count]
       --chunk-size <CHUNK_SIZE>    Number of sequences per HMMER batch. Larger batches reduce subprocess overhead; smaller batches improve memory locality and progress reporting granularity [default: 10000]
       --no-clip                    Keep extracted reads as full input sequences (no clipping). By default, SSUplex clips each read to the SSU coordinate envelope from HMM hits
       --debug-scores               Also write `{prefix}.scores.tsv` (per read and matched origin: n_regions, mean, sum, best_evalue) and `{prefix}.regions.tsv` (every per-region hit with score and coordinates), for diagnostics
@@ -159,24 +163,37 @@ For each read and origin, SSUplex keeps at most one hit per conserved-region
 profile and summarises the hits as a region count, a summed bit score and a mean
 bit score. `--rank` chooses which of these decides the origin:
 
-| `--rank`         | Origin chosen by                  | Ties broken by    |
-| ---------------- | --------------------------------- | ----------------- |
-| `mean` (default) | highest mean per-region bit score | number of regions |
-| `sum`            | highest summed bit score          | number of regions |
-| `count`          | most matched regions              | mean bit score    |
+| `--rank`        | Origin chosen by                  | Ties broken by    |
+| --------------- | --------------------------------- | ----------------- |
+| `sum` (default) | highest summed bit score          | number of regions |
+| `mean`          | highest mean per-region bit score | number of regions |
+| `count`         | most matched regions              | mean bit score    |
 
-These mirror Metaxa2's `--selection_priority` options `score` (its default),
-`sum` and `domains`, with one difference: Metaxa2 divides its sum by the number
-of profiles in the origin's set, and SSUplex does not. Because
+These mirror Metaxa2's `--selection_priority` options `sum`, `score` (Metaxa2's
+default) and `domains`, with one difference: Metaxa2 divides its sum by the
+number of profiles in the origin's set, and SSUplex does not. Because
 `mitochondria.hmm` combines Metaxa2's M and N sets, a mitochondrial origin can
 collect hits from both. A read is reported as unclassified when the chosen
 origin matches fewer than `--min-domains` regions or its mean score is below
 `--min-score`.
 
-The statistics behave differently near the bacteria/mitochondria boundary,
-where mitochondrial SSU (of alphaproteobacterial origin) and bacterial SSU are
-close. Measured accuracy of each statistic against known origins is reported in
-[`dev/BENCHMARK.md`](dev/BENCHMARK.md).
+**Why `sum` is the default.** On noisy long reads, the true origin of a read
+typically matches more conserved regions than a related origin does, but each
+match scores a little lower. The mean ignores how many regions matched: on the
+ZymoBIOMICS Nanopore mock community it assigned more than half of the bacterial
+reads to chloroplast or mitochondria, and so does Metaxa2's own HMM-based step,
+which also ranks by the mean. The sum takes breadth into account and was the
+only statistic that stayed accurate on both clean reference sequences and noisy
+Nanopore reads ([`dev/BENCHMARK.md`](dev/BENCHMARK.md)).
+
+Its weakness is the opposite case: organellar reads that also match many
+bacterial profiles can be assigned to bacteria. In the benchmarks this affected
+about one in five full-length chloroplast reference sequences and more than a
+third of the reads that Metaxa2 (with BLAST) called mitochondrial in a
+plant-root sample. Metaxa2 resolves such reads with its BLAST step; with
+SSUplex, expect some organellar reads in the bacterial output. Classifiers whose
+reference databases include organelle sequences, such as SILVA, will label them
+as chloroplast or mitochondria.
 
 ## Relation to Metaxa2
 
@@ -186,18 +203,18 @@ classification against its reference database, and its final origin calls
 also take those BLAST matches into account; `metaxa2 -x T` runs the extraction
 step alone. SSUplex has no classification step and leaves taxonomy to a
 dedicated classifier. Other differences: SSUplex searches with `nhmmer`
-(Metaxa2 uses `hmmsearch` on both strands), its defaults are an E-value cutoff
-of 1e-5 and one matching region (Metaxa2 requires two domains, or one domain at
-E-value 1e-10 or lower), and it scores Metaxa2's M and N mitochondrial sets
-together.
+(Metaxa2 uses `hmmsearch` on both strands), ranks origins by summed rather
+than mean score by default, uses an E-value cutoff of 1e-5 and one matching
+region by default (Metaxa2 requires two domains, or one domain at E-value 1e-10
+or lower), and scores Metaxa2's M and N mitochondrial sets together.
 
 ## Scope and limitations
 
 - SSUplex is built as a preprocessing step for 16S/18S amplicon metabarcoding.
   It will run on shotgun reads, but that use has not been benchmarked, and
   because the whole input is held in memory, peak memory grows with input size.
-- Bacteria versus mitochondria is the least certain call, especially on noisy
-  reads; see [Origin ranking](#origin-ranking).
+- Organellar reads that also match bacterial profiles are the least certain
+  calls; see [Origin ranking](#origin-ranking).
 - The profiles come from the Metaxa2 database (built from SILVA release 111 and
   Mitozoa release 10), so lineages that are poorly represented there may be
   detected less reliably.

@@ -15,9 +15,19 @@ URL="$(curl -fsS "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=${AC
 [ -n "$URL" ] || { echo "FAIL: no FASTQ found for $ACC in ENA" >&2; exit 1; }
 
 echo "streaming the first $N reads of https://$URL" >&2
-set +o pipefail   # head closes the stream early on purpose
-curl -fsS "https://$URL" | gunzip -c 2>/dev/null | head -n $((N * 4)) \
-  | awk 'NR%4==1{split($0,a," "); print ">" substr(a[1],2)} NR%4==2{print}' > "$OUT.tmp"
+echo "(progress is printed every 100,000 reads; large requests take a while)" >&2
+# head stops the download on purpose once N reads are in, so curl's write
+# error at that point is expected and silenced; the read count is checked below.
+set +o pipefail
+curl -fs "https://$URL" | gunzip -c 2>/dev/null | head -n $((N * 4)) \
+  | awk 'NR%4==1{split($0,a," "); print ">" substr(a[1],2); if ((NR+3)/4 % 100000 == 0) printf "  %d reads\n", (NR+3)/4 > "/dev/stderr"}
+         NR%4==2{print}' > "$OUT.tmp"
 set -o pipefail
+got="$(grep -c '^>' "$OUT.tmp" || true)"
+[ "$got" -gt 0 ] || { rm -f "$OUT.tmp"; echo "FAIL: no reads downloaded for $ACC" >&2; exit 1; }
 mv "$OUT.tmp" "$OUT"
-echo "wrote $OUT ($(grep -c '^>' "$OUT") reads)" >&2
+if [ "$got" -lt "$N" ]; then
+  echo "wrote $OUT ($got reads; the run has fewer than $N, or the download stopped early)" >&2
+else
+  echo "wrote $OUT ($got reads)" >&2
+fi

@@ -112,6 +112,62 @@ Definitions used for every method:
   origins, with the per-origin region counts and mean and summed scores from
   `--debug-scores`.
 
+### Results
+
+Produced with `dev/run_real_data.sh` (first 5,000 reads of each public run;
+reference set with `--per-origin 100 --negatives 10 --seed 42`) on an AMD Ryzen 9
+9950X with HMMER 3.4 and Metaxa2 2.2.3. Accuracy against known origins:
+
+| Dataset | SSU reads | Metaxa2 HMM stage | Metaxa2 final | SSUplex sum | SSUplex mean | SSUplex count |
+| ------- | --------: | ----------------: | ------------: | ----------: | -----------: | ------------: |
+| Metaxa2 test file | 50 | 96.0% | 100% | 96.0% | 96.0% | 66.0% |
+| Metaxa2 reference set | 500 | 94.8% | 99.8% | 95.6% | 96.8% | 79.2% |
+| ZymoBIOMICS ONT | 5,000 | 54.9% | 99.96% | 95.9% | 43.0% | 95.7% |
+
+Every method rejected all 50 LSU sequences in the test file and all 10 random
+negatives in the reference set.
+
+The rice-root sample has no per-read truth. Reads assigned to each origin, and
+agreement with Metaxa2's final (BLAST-assisted) calls among reads both assign to
+an SSU origin:
+
+| Method | Bacteria | Mitochondria | Chloroplast | Organellar | Agreement with Metaxa2 final |
+| ------ | -------: | -----------: | ----------: | ---------: | ---------------------------: |
+| Metaxa2 HMM stage | 1,237 | 1,741 | 1,987 | 74.6% | 66.9% |
+| Metaxa2 final | 2,873 | 352 | 1,769 | 42.4% | |
+| SSUplex sum | 3,008 | 231 | 1,761 | 39.8% | 96.8% |
+| SSUplex mean | 1,141 | 1,602 | 2,248 | 77.0% | 64.5% |
+| SSUplex count | 3,765 | 137 | 1,098 | 24.7% | 81.6% |
+
+### Choice of the default ranking statistic
+
+The mean, which is also the default of Metaxa2's HMM-based step, assigns many
+noisy bacterial reads to chloroplast or mitochondria: on the ZymoBIOMICS reads
+SSUplex with mean scored 43.0% and Metaxa2's HMM stage 54.9%. On the reads
+where the statistics disagree, the bacterial profiles matched a median of 9
+regions against 4 for the organellar origins, at a slightly lower mean score. The sum is the only
+statistic that is above 95% on every labelled dataset and it agrees with
+Metaxa2's final calls on 96.8% of the rice reads, so it is the default. Its
+errors run the other way: chloroplast reference sequences (80 of 100 correct)
+and reads Metaxa2 calls mitochondrial in the rice sample (134 of 352 assigned to
+bacteria) can go to bacteria, which has more profiles (15, against 12 for
+chloroplast and 10 for Metaxa2's M set).
+
+Normalising the sum by the number of profiles in each origin's set, as
+Metaxa2's own `sum` option does, was also evaluated, offline from the same hits
+with `dev/compare_rank_rules.py`. With M and N scored separately it is accurate
+on clean sequences (100% on the test file, 96.2% on the reference set) but sends
+noisy bacterial reads to mitochondria (80.6% on ZymoBIOMICS; 1,280 rice reads
+called mitochondrial). With M and N together it loses most mitochondria (2 of
+10 in the test file; 45 rice reads). Neither was adopted.
+
+The default was chosen on these four datasets.
+
+```bash
+python3 dev/compare_rank_rules.py --hmm-src Metaxa2_2.2.3/metaxa2_db/SSU/HMMs \
+    accuracy/testfasta accuracy/ref accuracy/zymo accuracy/rice
+```
+
 ## Run time and memory
 
 ```bash

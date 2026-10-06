@@ -13,9 +13,9 @@ use clap::{Parser, ValueEnum};
 /// `dev/BENCHMARK.md`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, ValueEnum)]
 pub enum RankMetric {
-    /// Mean per-region bit score; region count breaks ties (default)
+    /// Mean per-region bit score; region count breaks ties
     Mean,
-    /// Summed per-region bit score; region count breaks ties
+    /// Summed per-region bit score; region count breaks ties (default)
     Sum,
     /// Number of matched conserved regions; mean bit score breaks ties
     Count,
@@ -72,11 +72,11 @@ pub struct Args {
     #[arg(long = "min-domains", default_value_t = 1)]
     pub min_domains: usize,
 
-    /// Statistic used to rank candidate origins for each read: `mean` (mean
-    /// per-region bit score, the default), `sum` (summed per-region bit
-    /// score), or `count` (number of matched regions). See the README section
+    /// Statistic used to rank candidate origins for each read: `sum` (summed
+    /// per-region bit score, the default), `mean` (mean per-region bit score),
+    /// or `count` (number of matched regions). See the README section
     /// "Origin ranking".
-    #[arg(long = "rank", value_enum, default_value_t = RankMetric::Mean)]
+    #[arg(long = "rank", value_enum, default_value_t = RankMetric::Sum)]
     pub rank: RankMetric,
 
     /// Number of sequences per HMMER batch. Larger batches reduce subprocess
@@ -110,4 +110,15 @@ fn num_cpus_default() -> usize {
     std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_rank_is_sum() {
+        let args = Args::try_parse_from(["ssuplex", "-i", "reads.fasta", "-o", "out"]).unwrap();
+        assert_eq!(args.rank, RankMetric::Sum);
+    }
 }

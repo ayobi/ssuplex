@@ -38,6 +38,9 @@ done
   echo "usage: $0 --reads <reads.fasta> --hmm-dir <hmms> --out <dir> [--sizes ...] [--reps N] [--threads N] [--bin BIN] [--m2-mode extract|full]" >&2
   exit 1; }
 
+[[ -s "$READS" ]] || { echo "FAIL: input FASTA not found or empty: $READS" >&2; exit 1; }
+[[ -s "$HMM/bacteria.hmm" ]] || { echo "FAIL: no bacteria.hmm in $HMM" >&2; exit 1; }
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 for tool in metaxa2 nhmmer hmmsearch python3; do
   command -v "$tool" >/dev/null 2>&1 || { echo "FAIL: '$tool' not on PATH" >&2; exit 1; }

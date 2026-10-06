@@ -3,7 +3,7 @@
 //! Given a set of HMM hits across several origin profiles (bacteria, archaea,
 //! eukaryota, mitochondria, chloroplast), this module decides which origin a
 //! read belongs to. Hits are aggregated per origin and ranked by the statistic
-//! selected with `--rank` (mean per-region bit score by default), with an
+//! selected with `--rank` (summed per-region bit score by default), with an
 //! optional minimum-region floor (`min_domains`). Reads with no qualifying
 //! origin are reported as [`Origin::Unclassified`].
 
