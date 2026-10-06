@@ -8,8 +8,8 @@
 # SSUplex runs once per ranking statistic (mean, sum, count); the mean run also
 # writes the --debug-scores tables used for the disagreement breakdown.
 #
-# Requires on PATH: metaxa2 (Bioconda package "metaxa"), nhmmer, python3.
-#   conda create -n metaxa -c conda-forge -c bioconda metaxa
+# Requires on PATH: metaxa2, nhmmer, python3. dev/BENCHMARK.md describes an
+# environment in which both tools use the same HMMER build.
 #
 # Usage:
 #   dev/run_benchmark.sh --db <metaxa2_db> --reads <reads.fasta> --out <dir> \

@@ -8,15 +8,18 @@ script in this directory.
 ## Software environment
 
 Run both tools against the same HMMER build so that differences reflect the
-implementations rather than HMMER versions. One way to do this with conda
-(Metaxa2's Bioconda package is named `metaxa`; installing it without its
-dependencies avoids its HMMER 3.1 pin):
+implementations rather than HMMER versions. Metaxa2's Bioconda package
+(`metaxa`) requires HMMER 3.1, which cannot be installed alongside HMMER 3.4,
+so Metaxa2 is run from its official download, which uses whatever HMMER and
+legacy BLAST are on `PATH` (its scripts also need a system Perl):
 
 ```bash
 conda create -n ssuplex-bench -c conda-forge -c bioconda \
     hmmer=3.4 blast-legacy=2.2.26 mafft perl psutil matplotlib
 conda activate ssuplex-bench
-conda install -c conda-forge -c bioconda --no-deps metaxa
+curl -L -O https://microbiology.se/sw/Metaxa2_2.2.3.tar.gz
+tar xzf Metaxa2_2.2.3.tar.gz
+export PATH="$PWD/Metaxa2_2.2.3:$PATH"
 cargo build --release --locked
 ```
 
@@ -24,8 +27,8 @@ Each harness writes a `versions.txt` recording the SSUplex version, the paths
 and versions of `nhmmer` and of the `hmmsearch` Metaxa2 uses, the Metaxa2
 version, and the machine.
 
-Profiles are assembled from the Metaxa2 2.2.3 download as described in the
-README (`dev/assemble_metaxa2_hmms.sh Metaxa2_2.2.3/metaxa2_db hmms`).
+Profiles are assembled from the same download as described in the README
+(`dev/assemble_metaxa2_hmms.sh Metaxa2_2.2.3/metaxa2_db hmms`).
 
 ## Datasets
 
