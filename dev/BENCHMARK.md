@@ -71,6 +71,16 @@ python3 dev/make_truth_set.py --db Metaxa2_2.2.3/metaxa2_db --out ref \
 
 ## Accuracy and agreement
 
+All four datasets in one command (fetches the reads, builds the truth tables
+and the reference set, and runs each dataset as below; reports are collected
+in `ALL_REPORTS.txt`):
+
+```bash
+dev/run_real_data.sh --metaxa2-dir Metaxa2_2.2.3 --out accuracy --threads 16
+```
+
+A single dataset:
+
 ```bash
 dev/run_benchmark.sh --db Metaxa2_2.2.3/metaxa2_db --reads zymo_5k.fasta \
     --truth zymo_5k.truth.tsv --out bench/zymo_5k --threads 8

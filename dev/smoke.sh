@@ -81,6 +81,14 @@ echo ">stale" > "$PREFIX.chloroplast.fasta"   # file a previous run might have l
 check "--force run succeeded"                test "$(nrec "$PREFIX.bacteria.fasta")" -eq 2
 check "--force removed stale per-origin file" test ! -e "$PREFIX.chloroplast.fasta"
 
+echo ">> checking very short reads (nhmmer cannot guess their alphabet)"
+for i in $(seq 1 50); do printf '>short_%s\nACGTACGT\n' "$i"; done > "$WORK/short.fasta"
+if "$BIN" -i "$WORK/short.fasta" -o "$WORK/out/short" --hmm-dir "$WORK/hmms" -t 2 >/dev/null 2>&1; then
+  check "short reads end up unclassified" test "$(nrec "$WORK/out/short.unclassified.fasta")" -eq 50
+else
+  echo "  FAIL: run on very short reads aborted"; fails=$((fails + 1))
+fi
+
 echo
 if [[ "$fails" -eq 0 ]]; then
   echo "ALL CHECKS PASSED"

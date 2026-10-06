@@ -178,6 +178,9 @@ fn scan_chunk(chunk: &[IndexedRead], profile: &OriginProfile, args: &Args) -> Re
         .arg("-E")
         .arg(format!("{:e}", args.evalue))
         .arg("--noali")
+        // State the alphabet instead of letting nhmmer guess it: guessing fails
+        // on chunks of very short or low-complexity reads and aborted the run.
+        .arg("--dna")
         .arg("--cpu")
         .arg("1") // intra-process parallelism handled by rayon at the job level
         .arg(&profile.hmm_path)
