@@ -189,8 +189,10 @@ every run:
 
 `dev/plot_timing.py` writes a summary table (median, minimum and maximum over
 replicates), the speed-up and memory ratio at each size, and the figure, which
-shows measured points only. Add `--m2-mode full` to time Metaxa2's default
-pipeline, including BLAST classification, as a separate reference.
+shows measured points only, on log-log axes. Add `--m2-mode full` to time
+Metaxa2's default pipeline, including BLAST classification, as a separate
+reference; `plot_timing.py <timing.tsv> <prefix> --full <timing_full.tsv>` adds
+it to the figure.
 
 Metaxa2 keeps batches of sequences in memory and sizes them according to the
 memory available, so its peak memory depends partly on the machine; report the
