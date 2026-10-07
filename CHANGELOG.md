@@ -22,7 +22,8 @@
 - `--force`.
 - Benchmark harness in `dev/`: accuracy against truth and agreement with both
   Metaxa2 stages, run time and process-tree memory across input sizes, offline
-  comparison of ranking rules, and scripts to fetch the public datasets.
+  comparison of ranking rules, scripts to fetch the public datasets, and an
+  independent simulated benchmark (`dev/sim/`).
 - CI runs the README installation and quick start verbatim.
 
 ### Removed

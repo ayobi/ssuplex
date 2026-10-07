@@ -168,6 +168,45 @@ python3 dev/compare_rank_rules.py --hmm-src Metaxa2_2.2.3/metaxa2_db/SSU/HMMs \
     accuracy/testfasta accuracy/ref accuracy/zymo accuracy/rice
 ```
 
+## Independent simulated benchmark
+
+The labelled real datasets above either come from the Metaxa2 database or
+contain bacteria only. The simulated benchmark adds labelled reads for all five
+origins from sequences outside the Metaxa2 database, at three read accuracies.
+
+```bash
+conda create -y -n ssuplex-sim -c conda-forge -c bioconda python=3.12 badread vsearch
+dev/sim/run_simulation.sh --metaxa2-dir Metaxa2_2.2.3 --out sim --threads 16
+```
+
+- **Sources** (`dev/sim/build_sources.py`). Bacteria, archaea and nuclear
+  eukaryota come from SILVA 138.2 SSU Ref NR99, without entries SILVA labels as
+  chloroplast or mitochondria. Mitochondria and chloroplasts come from the SSU
+  rRNA genes annotated in the NCBI RefSeq mitochondrion and plastid genome
+  releases (chloroplasts only; partial and split genes are skipped). Sequences
+  whose accession is in the Metaxa2 database are excluded and identical sequences
+  are collapsed. For each candidate, `vsearch` finds the closest Metaxa2
+  database sequence, and sources are drawn evenly from three novelty bands per
+  origin: 99% identity or more, 97 to 99%, and below 97% (a band's shortfall is
+  filled from the others). Negatives are SILVA 138.2 LSU sequences and
+  composition-preserving shuffles of SSU sources. The defaults are 2,000 sources
+  per origin and 2,000 negatives.
+- **Reads** (`dev/sim/simulate_reads.py`). Every source yields full-length reads
+  (two per profile by default) from a random strand, with errors added by
+  Badread's empirical error models used as a library: `ont_r9` (nanopore2020
+  model, mean identity 92%), `ont_r10` (nanopore2023, 98.5%) and `hifi_like`
+  (pacbio2021, about Q30, 99.9%).
+- **Scoring**. Each profile runs through `dev/run_benchmark.sh`, so Metaxa2's
+  two stages and SSUplex's three statistics are scored with the definitions
+  above. `dev/sim/score_by_band.py` then reports recall by origin and novelty
+  band, recall for metazoan and non-metazoan mitochondria, negatives rejected,
+  and the accuracy and organellar share each method would report for a
+  bacteria-dominated sample and a plant-root-like sample (computed from the
+  per-origin call rates, which do not depend on composition).
+
+The download record (`sim/db/download_record.txt`) notes the RefSeq release
+used. All randomness is seeded.
+
 ## Run time and memory
 
 ```bash

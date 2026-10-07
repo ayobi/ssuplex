@@ -210,9 +210,12 @@ or lower), and scores Metaxa2's M and N mitochondrial sets together.
 
 ## Scope and limitations
 
-- SSUplex is built as a preprocessing step for 16S/18S amplicon metabarcoding.
-  It will run on shotgun reads, but that use has not been benchmarked, and
-  because the whole input is held in memory, peak memory grows with input size.
+- SSUplex is built and benchmarked as a preprocessing step for full-length
+  16S/18S amplicons sequenced with long reads (Nanopore, and reads at PacBio HiFi
+  accuracy). It will run on short reads and on shotgun reads, but neither use has
+  been benchmarked: a short read spans only one or two of the conserved regions
+  that origin assignment relies on. The whole input is held in memory, so peak
+  memory grows with input size.
 - Organellar reads that also match bacterial profiles are the least certain
   calls; see [Origin ranking](#origin-ranking).
 - The profiles come from the Metaxa2 database (built from SILVA release 111 and
