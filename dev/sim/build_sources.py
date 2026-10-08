@@ -102,13 +102,22 @@ def silva_ssu(path, excluded, pools, organelles):
     skipped = defaultdict(int)
     for header, seq in read_fasta(path):
         acc_token, _, tax = header.partition(" ")
-        if "Chloroplast" in tax or "Mitochondria" in tax:
+        ranks = [r.strip() for r in tax.split(";")]
+        # Organelles are whole rank names under Bacteria (...;Cyanobacteriia;Chloroplast;...
+        # and ...;Rickettsiales;Mitochondria;...). A substring test would also catch the
+        # eukaryotic lineage Chloroplastida (green algae and land plants, nuclear 18S).
+        organelle = None
+        if ranks[0] == "Bacteria" and "Chloroplast" in ranks:
+            organelle = "chloroplast"
+        elif ranks[0] == "Bacteria" and "Mitochondria" in ranks:
+            organelle = "mitochondria"
+        if organelle:
             if not organelles:
                 skipped["organelle label"] += 1
                 continue
-            origin = "chloroplast" if "Chloroplast" in tax else "mitochondria"
+            origin = organelle
         else:
-            origin = {"Bacteria": "bacteria", "Archaea": "archaea", "Eukaryota": "eukaryota"}.get(tax.split(";")[0])
+            origin = {"Bacteria": "bacteria", "Archaea": "archaea", "Eukaryota": "eukaryota"}.get(ranks[0])
         if origin is None:
             continue
         if accession_root(acc_token) in excluded:
