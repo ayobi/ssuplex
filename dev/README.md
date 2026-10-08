@@ -20,4 +20,5 @@ for the full protocol.
 | `sim/build_sources.py` | Labelled sources outside the Metaxa2 database, by novelty band |
 | `sim/simulate_reads.py` | Full-length long reads with Badread's error models |
 | `sim/score_by_band.py` | Accuracy by novelty band, subgroup and sample composition |
+| `supplementary_tables.py` | Supplementary tables S1 to S3 for the manuscript, as LaTeX |
 | `smoke.sh`, `gen_fixtures.py` | End-to-end test on synthetic profiles and reads |

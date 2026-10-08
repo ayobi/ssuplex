@@ -266,6 +266,18 @@ with 64 GB of memory, HMMER 3.4 for both tools, Metaxa2 2.2.3 with `-x T`:
   up to twice as slow. They were repeated on an otherwise idle machine; the
   original runs are kept in `timing.all_runs.tsv`.
 
+## Supplementary tables
+
+`dev/supplementary_tables.py` writes the manuscript's supplementary tables as
+LaTeX from the outputs above: confusion matrices for every labelled dataset and
+method with the rice-root comparison (S1), the reads on which the ranking
+statistics disagree with their region counts and scores (S2), and, with `--sim`,
+the simulated benchmark by read accuracy, origin and novelty band (S3).
+
+```bash
+python3 dev/supplementary_tables.py --accuracy accuracy --sim sim --out supplementary
+```
+
 ## Smoke test
 
 `dev/smoke.sh` builds synthetic profiles and reads, runs SSUplex, and checks
