@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Independent simulated benchmark, end to end:
-#   1. download SILVA 138.2 and the RefSeq organelle genomes   (fetch_sources.sh)
+#   1. download SILVA 138.2 SSU and the RefSeq organelle genomes (fetch_sources.sh)
 #   2. build labelled sources independent of the Metaxa2 database (build_sources.py)
 #   3. simulate full-length reads at three accuracy levels       (simulate_reads.py)
 #   4. run Metaxa2 and SSUplex on each set and score them        (../run_benchmark.sh)
@@ -60,8 +60,18 @@ fi
 BIN="$ROOT/target/release/ssuplex"
 
 echo "=== 1/5 source databases ==="
-bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" >/dev/null
+# Negatives come from the Metaxa2 LSU database when the download includes it;
+# otherwise SILVA's LSU set is downloaded too.
+if ls "$DB/LSU/blast".n* >/dev/null 2>&1; then
+  bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" >/dev/null
+  [[ -s "$OUT/metaxa2_lsu.fasta" ]] || fastacmd -d "$DB/LSU/blast" -D 1 > "$OUT/metaxa2_lsu.fasta"
+  LSU="$OUT/metaxa2_lsu.fasta"; LSU_LABEL="Metaxa2 LSU"
+else
+  bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" --with-silva-lsu >/dev/null
+  LSU="$OUT/db/SILVA_138.2_LSURef_NR99_tax_silva.fasta.gz"; LSU_LABEL="SILVA LSU"
+fi
 tail -n +2 "$OUT/db/download_record.txt" | head -n 1
+echo "negatives from: $LSU_LABEL"
 
 echo "=== 2/5 sources independent of the Metaxa2 database ==="
 if [[ ! -s "$OUT/sources/sources.tsv" ]]; then
@@ -69,7 +79,7 @@ if [[ ! -s "$OUT/sources/sources.tsv" ]]; then
   [[ -s "$OUT/metaxa2_ssu.fasta" ]] || fastacmd -d "$DB/SSU/blast" -D 1 > "$OUT/metaxa2_ssu.fasta"
   "${SIM[@]}" python3 "$ROOT/dev/sim/build_sources.py" \
     --silva-ssu "$OUT/db/SILVA_138.2_SSURef_NR99_tax_silva.fasta.gz" \
-    --silva-lsu "$OUT/db/SILVA_138.2_LSURef_NR99_tax_silva.fasta.gz" \
+    --lsu "$LSU" --lsu-label "$LSU_LABEL" \
     --refseq "$OUT"/db/refseq/*.genomic.gbff.gz \
     --metaxa2-fasta "$OUT/metaxa2_ssu.fasta" --out "$OUT/sources" \
     --per-origin "$PER" --negatives "$NEG" --threads "$THREADS"

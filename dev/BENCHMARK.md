@@ -188,8 +188,9 @@ dev/sim/run_simulation.sh --metaxa2-dir Metaxa2_2.2.3 --out sim --threads 16
   are collapsed. For each candidate, `vsearch` finds the closest Metaxa2
   database sequence, and sources are drawn evenly from three novelty bands per
   origin: 99% identity or more, 97 to 99%, and below 97% (a band's shortfall is
-  filled from the others). Negatives are SILVA 138.2 LSU sequences and
-  composition-preserving shuffles of SSU sources. The defaults are 2,000 sources
+  filled from the others). Negatives are LSU sequences from the Metaxa2 LSU
+  database (negatives only need to be non-SSU, so they need not be independent
+  of Metaxa2) and composition-preserving shuffles of SSU sources. The defaults are 2,000 sources
   per origin and 2,000 negatives.
 - **Reads** (`dev/sim/simulate_reads.py`). Every source yields full-length reads
   (two per profile by default) from a random strand, with errors added by

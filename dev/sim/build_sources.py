@@ -6,8 +6,10 @@ Sources
                                 entries labelled Chloroplast or Mitochondria are not used
   mitochondria, chloroplast     SSU rRNA genes annotated in NCBI RefSeq mitochondrion
                                 and plastid genomes (plastid: chloroplasts only)
-  negatives                     SILVA LSU Ref NR99 sequences, plus composition-preserving
-                                shuffles of sampled SSU sources
+  negatives                     LSU sequences (by default from the Metaxa2 LSU database,
+                                which needs no independence because negatives only have to
+                                be non-SSU), plus composition-preserving shuffles of
+                                sampled SSU sources
 
 Independence
   Any sequence whose accession also occurs in the Metaxa2 SSU database is dropped,
@@ -248,7 +250,8 @@ def nearest_identity(cands, metaxa2_fasta, workdir, threads, label):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--silva-ssu", required=True)
-    ap.add_argument("--silva-lsu", required=True)
+    ap.add_argument("--lsu", required=True, help="LSU sequences used as negatives (FASTA, optionally gzipped)")
+    ap.add_argument("--lsu-label", default="LSU", help="source name recorded in negatives.tsv")
     ap.add_argument("--refseq", nargs="+", required=True, help="RefSeq mitochondrion and plastid .gbff(.gz) files")
     ap.add_argument("--metaxa2-fasta", required=True, help="Metaxa2 SSU database sequences as FASTA")
     ap.add_argument("--out", required=True)
@@ -308,7 +311,7 @@ def main():
     # negatives: half LSU, half shuffled SSU sources
     n_lsu = a.negatives // 2
     lsu = Reservoir(n_lsu, random.Random(f"{a.seed}-lsu"))
-    for header, seq in read_fasta(a.silva_lsu):
+    for header, seq in read_fasta(a.lsu):
         seq = clean(seq)
         if len(seq) >= 1500 and ambiguous_fraction(seq) <= 0.005:
             lsu.add((header.split()[0], seq))
@@ -321,7 +324,7 @@ def main():
          open(os.path.join(a.out, "negatives.tsv"), "w") as tsv:
         tsv.write("source_id\tkind\tdatabase\taccession\tlength\n")
         n = 0
-        for kind, db, items in (("LSU", "SILVA LSU", lsu.items), ("shuffled SSU", "shuffled", shuffled)):
+        for kind, db, items in (("LSU", a.lsu_label, lsu.items), ("shuffled SSU", "shuffled", shuffled)):
             for acc, seq in items:
                 n += 1
                 fa.write(f">neg{n:06d}\n{seq}\n")

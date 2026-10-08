@@ -16,7 +16,7 @@ for the full protocol.
 | `peakmem.py` | Run one command and report wall time and process-tree peak memory |
 | `plot_timing.py` | Summarise timing results and draw the performance figure |
 | `sim/run_simulation.sh` | Independent simulated benchmark, end to end |
-| `sim/fetch_sources.sh` | Download SILVA 138.2 and the RefSeq organelle genomes |
+| `sim/fetch_sources.sh` | Download SILVA 138.2 SSU and the RefSeq organelle genomes |
 | `sim/build_sources.py` | Labelled sources outside the Metaxa2 database, by novelty band |
 | `sim/simulate_reads.py` | Full-length long reads with Badread's error models |
 | `sim/score_by_band.py` | Accuracy by novelty band, subgroup and sample composition |
