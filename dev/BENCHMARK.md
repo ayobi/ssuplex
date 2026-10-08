@@ -237,6 +237,35 @@ Metaxa2 keeps batches of sequences in memory and sizes them according to the
 memory available, so its peak memory depends partly on the machine; report the
 machine with the results.
 
+### Results
+
+First N reads of the ZymoBIOMICS run (SRR10391201), 12 threads, three
+replicates per point (medians; replicates agree within 2%), AMD Ryzen 9 9950X
+with 64 GB of memory, HMMER 3.4 for both tools, Metaxa2 2.2.3 with `-x T`:
+
+| Reads | SSUplex | Metaxa2 | Speed-up | SSUplex peak memory | Metaxa2 peak memory | Memory saved |
+| ----: | ------: | ------: | -------: | ------------------: | ------------------: | -----------: |
+| 5,000 | 8.3 s | 9.0 s | 1.1x | 0.11 GB | 0.24 GB | 54% |
+| 25,000 | 21 s | 46 s | 2.2x | 0.32 GB | 0.53 GB | 39% |
+| 100,000 | 63 s | 185 s | 2.9x | 1.0 GB | 1.6 GB | 38% |
+| 200,000 | 118 s | 372 s | 3.2x | 1.7 GB | 3.2 GB | 46% |
+| 500,000 | 280 s | 897 s | 3.2x | 3.9 GB | 7.1 GB | 45% |
+| 1,000,000 | 550 s | 1,773 s | 3.2x | 7.7 GB | 14.3 GB | 46% |
+
+- Peak memory is for the whole process tree. Measured the way `/usr/bin/time`
+  does (largest single process), SSUplex used 34% less than Metaxa2 at 200,000
+  reads; the rest of the difference is Metaxa2's helper processes running at
+  the same time.
+- At 1,000,000 reads SSUplex also used 39% less CPU time (7,235 against
+  11,832 CPU seconds).
+- Metaxa2's default pipeline, with BLAST classification, was timed at 5,000 and
+  25,000 reads: 539 s and 2,865 s, 65 and 134 times SSUplex's run time. Its peak
+  memory matched the extraction-only runs, since extraction sets the peak.
+- Three replicate pairs (500,000 reads replicates 2 and 3; 1,000,000 reads
+  replicate 1) first ran while the machine was in use for other work and were
+  up to twice as slow. They were repeated on an otherwise idle machine; the
+  original runs are kept in `timing.all_runs.tsv`.
+
 ## Smoke test
 
 `dev/smoke.sh` builds synthetic profiles and reads, runs SSUplex, and checks

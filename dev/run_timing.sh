@@ -100,5 +100,7 @@ for n in $SIZES; do
   done
 done
 
-python3 "$ROOT/dev/plot_timing.py" "$TSV" "$OUT/performance" \
+label="Metaxa2, extraction only (-x T)"
+[[ "$M2MODE" == full ]] && label="Metaxa2, full pipeline with BLAST"
+python3 "$ROOT/dev/plot_timing.py" "$TSV" "$OUT/performance" --metaxa2-label "$label" \
   || echo "figure not drawn (is matplotlib installed?)"
