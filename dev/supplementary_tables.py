@@ -115,6 +115,76 @@ def disagreement_table(name, rows, ref_col, min_n=2):
     return out
 
 
+MIXES = [("bacteria-dominated", {"bacteria": 0.90, "archaea": 0.02, "eukaryota": 0.02,
+                                 "mitochondria": 0.03, "chloroplast": 0.03}),
+         ("plant-root-like", {"bacteria": 0.55, "archaea": 0.01, "eukaryota": 0.02,
+                              "mitochondria": 0.07, "chloroplast": 0.35})]
+PROFILES = [("ont_r9", "92\\%"), ("ont_r10", "98.5\\%"), ("hifi_like", "99.9\\%")]
+BANDS = [("99-100", "99--100"), ("97-99", "97--99"), ("<97", "$<$97"), ("all", "all")]
+
+
+def simulated_tables(sim):
+    """Table S3: (a) recall by read identity, origin and novelty band; (b) expected
+    accuracy and reported organellar share for two sample compositions."""
+    a_rows, b_rows = [], []
+    band = {r["source_id"]: r["band"] for r in load(os.path.join(sim, "sources", "sources.tsv"))}
+    for profile, label in PROFILES:
+        path = os.path.join(sim, "bench", profile, "calls.tsv")
+        if not os.path.exists(path):
+            continue
+        rows = load(path)
+        src = {r["read_id"]: r["source_id"] for r in load(os.path.join(sim, "reads", f"{profile}.info.tsv"))}
+        if a_rows:
+            a_rows.append(r"\midrule")
+            b_rows.append(r"\midrule")
+        first = label
+        rate = {}
+        for o in ORIGINS:
+            for b, b_label in BANDS:
+                rs = [r for r in rows if r["truth"] == o and (b == "all" or band.get(src.get(r["read_id"])) == b)]
+                if not rs:
+                    continue
+                vals = [f"{100 * sum(r[c] == o for r in rs) / len(rs):.1f}" for c, _ in METHODS]
+                a_rows.append(f"{first} & {o if b == '99-100' else ''} & {b_label} & {num(len(rs))} & "
+                              + " & ".join(vals) + r" \\")
+                first = ""
+            rs = [r for r in rows if r["truth"] == o]
+            rate[o] = {c: Counter(r[c] for r in rs) for c, _ in METHODS}
+            for c, _ in METHODS:
+                rate[o][c] = {k: v / len(rs) for k, v in rate[o][c].items()}
+        first = label
+        for mix, w in MIXES:
+            true_org = round(100 * (w["mitochondria"] + w["chloroplast"]))
+            acc = [f"{100 * sum(w[o] * rate[o][c].get(o, 0) for o in ORIGINS):.1f}" for c, _ in METHODS]
+            org = [f"{100 * sum(w[o] * (rate[o][c].get('mitochondria', 0) + rate[o][c].get('chloroplast', 0)) for o in ORIGINS):.1f}"
+                   for c, _ in METHODS]
+            b_rows.append(f"{first} & {mix}, accuracy & " + " & ".join(acc) + r" \\")
+            b_rows.append(f" & {mix}, organellar (true {true_org}) & " + " & ".join(org) + r" \\")
+            first = ""
+    head = [r" & & \multicolumn{2}{c}{Metaxa2} & \multicolumn{3}{c}{SSUplex} \\"]
+    out = [r"\begin{table}[htbp]", r"\centering", r"\scriptsize",
+           r"\caption*{\textbf{(a) Recall (\%) by read identity, true origin and novelty band.} Band: "
+           r"identity of the source to its closest Metaxa2 database sequence; ``all'' pools the bands. "
+           r"Each source gave two reads.}",
+           r"\begin{tabular}{lllrrrrrr}", r"\toprule",
+           r" & & & & \multicolumn{2}{c}{Metaxa2} & \multicolumn{3}{c}{SSUplex} \\",
+           r"\cmidrule(lr){5-6}\cmidrule(lr){7-9}",
+           r"Read identity & Origin & Band (\%) & Reads & HMM & BLAST & sum & mean & count \\", r"\midrule"]
+    out += a_rows + [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
+    out += [r"\begin{table}[htbp]", r"\centering", r"\small",
+            r"\caption*{\textbf{(b) Expected accuracy (\%) and reported organellar share (\%) for two "
+            r"sample compositions.} Computed from the per-origin call rates in (a), which do not depend on "
+            r"composition. Bacteria-dominated: 90\% bacteria, 2\% archaea, 2\% eukaryota, 3\% mitochondria, "
+            r"3\% chloroplast (true organellar share 6\%). Plant-root-like: 55\% bacteria, 1\% archaea, "
+            r"2\% eukaryota, 7\% mitochondria, 35\% chloroplast (42\%), close to Metaxa2's BLAST-assisted "
+            r"calls on the rice-root sample.}",
+            r"\begin{tabular}{llrrrrr}", r"\toprule"] + head + [
+            r"\cmidrule(lr){3-4}\cmidrule(lr){5-7}",
+            r"Read identity & Composition, measure & HMM & BLAST & sum & mean & count \\", r"\midrule"]
+    out += b_rows + [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
+    return "\n".join(out)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--accuracy", required=True)
@@ -145,29 +215,8 @@ def main():
         f.write("\n".join(lines))
 
     if a.sim:
-        sim_lines = [r"\begin{table}[htbp]", r"\centering", r"\scriptsize",
-                     r"\begin{tabular}{lllr" + "r" * len(METHODS) + "}", r"\toprule",
-                     r"Reads & Origin & Band & Reads & " + " & ".join(n for _, n in METHODS) + r" \\",
-                     r"\midrule"]
-        for profile, plabel in (("ont_r9", "92\\%"), ("ont_r10", "98.5\\%"), ("hifi_like", "99.9\\%")):
-            path = os.path.join(a.sim, "bench", profile, "calls.tsv")
-            if not os.path.exists(path):
-                continue
-            rows = load(path)
-            info = {r["read_id"]: r["source_id"] for r in load(os.path.join(a.sim, "reads", f"{profile}.info.tsv"))}
-            band = {r["source_id"]: r["band"] for r in load(os.path.join(a.sim, "sources", "sources.tsv"))}
-            for o in ORIGINS:
-                for b in ("99-100", "97-99", "<97"):
-                    rs = [r for r in rows if r["truth"] == o and band.get(info.get(r["read_id"])) == b]
-                    if not rs:
-                        continue
-                    acc = [f"{100 * sum(r[c] == o for r in rs) / len(rs):.1f}" for c, _ in METHODS]
-                    sim_lines.append(f"{plabel} & {o} & {b.replace('<', '$<$')} & {num(len(rs))} & " + " & ".join(acc) + r" \\")
-            sim_lines.append(r"\midrule")
-        sim_lines[-1] = r"\bottomrule"
-        sim_lines += [r"\end{tabular}", r"\end{table}", ""]
         with open(os.path.join(a.out, "tableS3.tex"), "w") as f:
-            f.write("\n".join(sim_lines))
+            f.write(simulated_tables(a.sim))
     print(f"wrote supplementary tables to {a.out}")
 
 

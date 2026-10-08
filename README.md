@@ -188,12 +188,16 @@ Nanopore reads ([`dev/BENCHMARK.md`](dev/BENCHMARK.md)).
 
 Its weakness is the opposite case: organellar reads that also match many
 bacterial profiles can be assigned to bacteria. In the benchmarks this affected
-about one in five full-length chloroplast reference sequences and more than a
-third of the reads that Metaxa2 (with BLAST) called mitochondrial in a
-plant-root sample. Metaxa2 resolves such reads with its BLAST step; with
+about one in five full-length chloroplast reference sequences, more than a third
+of the reads that Metaxa2 (with BLAST) called mitochondrial in a plant-root
+sample, and 22 to 38% of simulated mitochondrial and 8 to 12% of simulated
+chloroplast reads. Metaxa2 resolves such reads with its BLAST step; with
 SSUplex, expect some organellar reads in the bacterial output. Classifiers whose
 reference databases include organelle sequences, such as SILVA, will label them
-as chloroplast or mitochondria.
+as chloroplast or mitochondria. Where the organellar fraction itself is what you
+are measuring, `--rank mean` recovers more organellar reads from accurate long
+reads (98.5% identity or better), at the cost of sending many bacterial reads to
+organelles.
 
 ## Relation to Metaxa2
 

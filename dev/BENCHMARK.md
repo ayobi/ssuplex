@@ -146,7 +146,7 @@ noisy bacterial reads to chloroplast or mitochondria: on the ZymoBIOMICS reads
 SSUplex with mean scored 43.0% and Metaxa2's HMM stage 54.9%. On the reads
 where the statistics disagree, the bacterial profiles matched a median of 9
 regions against 4 for the organellar origins, at a slightly lower mean score. The sum is the only
-statistic that is above 95% on every labelled dataset and it agrees with
+statistic that is above 95% on every labelled real dataset and it agrees with
 Metaxa2's final calls on 96.8% of the rice reads, so it is the default. Its
 errors run the other way: chloroplast reference sequences (80 of 100 correct)
 and reads Metaxa2 calls mitochondrial in the rice sample (134 of 352 assigned to
@@ -211,6 +211,45 @@ dev/sim/run_simulation.sh --metaxa2-dir Metaxa2_2.2.3 --out sim --threads 16
 
 The download record (`sim/db/download_record.txt`) lists the files used, and the
 RefSeq release when RefSeq is used. All randomness is seeded.
+
+### Results
+
+Default run (SILVA organelles, two reads per source): 2,000 sources per origin,
+except mitochondria, for which all 991 unique sequences left after excluding
+Metaxa2 accessions were used; 2,000 negatives (1,000 Metaxa2 LSU, 1,000
+shuffled); 21,982 reads per read identity. Recall (%) per origin, all novelty
+bands pooled:
+
+| Read identity | Method | Bacteria | Archaea | Eukaryota | Mitochondria | Chloroplast | Mean of origins |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 92% | Metaxa2 HMM step | 53.5 | 80.0 | 93.8 | 77.4 | 97.0 | 80.3 |
+| | Metaxa2 with BLAST | 99.5 | 99.4 | 99.6 | 69.9 | 96.6 | 93.0 |
+| | SSUplex sum | 97.1 | 99.3 | 97.7 | 77.5 | 92.5 | 92.8 |
+| | SSUplex mean | 43.0 | 81.0 | 96.5 | 69.9 | 91.7 | 76.4 |
+| 98.5% | Metaxa2 HMM step | 75.8 | 95.5 | 97.0 | 90.1 | 99.5 | 91.6 |
+| | Metaxa2 with BLAST | 99.7 | 99.9 | 99.7 | 73.7 | 98.5 | 94.3 |
+| | SSUplex sum | 99.5 | 100.0 | 99.2 | 65.6 | 89.0 | 90.7 |
+| | SSUplex mean | 69.9 | 94.6 | 98.5 | 84.9 | 99.5 | 89.5 |
+| 99.9% | Metaxa2 HMM step | 81.6 | 98.2 | 97.3 | 92.3 | 99.5 | 93.8 |
+| | Metaxa2 with BLAST | 99.7 | 99.9 | 99.7 | 74.8 | 98.9 | 94.6 |
+| | SSUplex sum | 99.5 | 100.0 | 99.4 | 61.6 | 88.2 | 89.7 |
+| | SSUplex mean | 78.7 | 96.5 | 98.8 | 86.3 | 99.5 | 92.0 |
+
+- With the summed score, bacteria, archaea and eukaryota stay above 96% at every
+  read identity and novelty band. The mean misassigns 21 to 57% of bacterial reads.
+- Organelles are the summed score's weak point, mostly lost to bacteria. Chloroplast
+  recall falls to 78 to 86% for sources below 97% identity to the Metaxa2
+  database. The mean recovers more organellar reads at 98.5% and 99.9% identity.
+- Metaxa2's BLAST step loses accuracy on novel mitochondria (63 to 69% below 97%
+  identity, against 80 to 86% at 99% or more).
+- Weighted to a bacteria-dominated composition (6% organellar) the summed score is
+  96.4 to 98.2% accurate (mean 47.1 to 80.3%; Metaxa2 with BLAST 98.5 to 98.9%),
+  and to a plant-root-like composition (42% organellar) 92.9 to 94.2% (mean 63.4
+  to 87.1%; Metaxa2 with BLAST 96.4 to 97.7%), so the summed score remains the
+  better default on these held-out data.
+
+Recall by novelty band and the composition-weighted results for every method are
+in the supplementary tables (`dev/supplementary_tables.py --sim`).
 
 ## Run time and memory
 
