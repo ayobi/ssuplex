@@ -1,7 +1,8 @@
 [package]
 name = "ssuplex"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
+rust-version = "1.85"
 authors = ["Aaron O'Brien <aaron.obrien@unab.cl>"]
 license = "MIT"
 description = "Fast Rust preprocessor for rRNA-marker eDNA workflows: extracts SSU rRNA from environmental sequencing reads and sorts them by origin (bacterial, archaeal, eukaryotic, mitochondrial, chloroplast)."
@@ -25,7 +26,6 @@ noodles-fasta = "0.49"
 rayon = "1.10"
 anyhow = "1.0"
 flate2 = "1.0"
-thiserror = "1.0"
 indicatif = "0.17"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

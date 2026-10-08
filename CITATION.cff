@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+message: "If you use SSUplex, please cite it as below, and also cite Metaxa2, whose profiles and extraction approach SSUplex uses."
+title: "SSUplex: fast, both-strand extraction and origin-sorting of small-subunit rRNA"
+version: 0.2.0
+date-released: 2026-10-08
+license: MIT
+repository-code: "https://github.com/ayobi/ssuplex"
+authors:
+  - family-names: "O'Brien"
+    given-names: Aaron
+    email: aaron.obrien@unab.cl
+    affiliation: "Centro de Biotecnología de Sistemas, Universidad Andrés Bello"
+  - family-names: Vargas Botia
+    given-names: Juan
+    affiliation: "Centro de Biotecnología de Sistemas, Universidad Andrés Bello"
+  - family-names: Acuña
+    given-names: Isabel
+    affiliation: "Centro de Biotecnología de Sistemas, Universidad Andrés Bello"
+  - family-names: Restovic
+    given-names: Franko
+    affiliation: "Centro de Biotecnología de Sistemas, Universidad Andrés Bello"
+  - family-names: Martínez
+    given-names: Patricio
+    affiliation: "Centro de Biotecnología de Sistemas, Universidad Andrés Bello"
+  - family-names: Parada
+    given-names: Pilar
+    affiliation: "Centro de Biotecnología de Sistemas, Universidad Andrés Bello"
+preferred-citation:
+  type: article
+  title: "SSUplex: fast, both-strand extraction and origin-sorting of small-subunit rRNA for environmental DNA metabarcoding"
+  doi: 10.64898/2026.07.02.736232
+  journal: bioRxiv
+  year: 2026
+  authors:
+    - family-names: "O'Brien"
+      given-names: Aaron
+    - family-names: Vargas Botia
+      given-names: Juan
+    - family-names: Acuña
+      given-names: Isabel
+    - family-names: Restovic
+      given-names: Franko
+    - family-names: Martínez
+      given-names: Patricio
+    - family-names: Parada
+      given-names: Pilar

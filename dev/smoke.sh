@@ -70,6 +70,25 @@ check "TSV records junk reads"             grep -q 'read_junk_1.*unclassified' "
 check "read_bact_1 clipped to coords 61-150" grep -q 'read_bact_1.*coords=61-150' "$PREFIX.bacteria.fasta"
 check "read_arch_1 clipped to coords 101-190" grep -q 'read_arch_1.*coords=101-190' "$PREFIX.archaea.fasta"
 
+echo ">> checking overwrite protection"
+if "$BIN" -i "$WORK/reads.fasta" -o "$PREFIX" --hmm-dir "$WORK/hmms" -t 4 -E 1e-3 >/dev/null 2>&1; then
+  echo "  FAIL: second run without --force overwrote existing outputs"; fails=$((fails + 1))
+else
+  echo "  PASS: second run without --force refused to overwrite"
+fi
+echo ">stale" > "$PREFIX.chloroplast.fasta"   # file a previous run might have left
+"$BIN" -i "$WORK/reads.fasta" -o "$PREFIX" --hmm-dir "$WORK/hmms" -t 4 -E 1e-3 --force >/dev/null 2>&1
+check "--force run succeeded"                test "$(nrec "$PREFIX.bacteria.fasta")" -eq 2
+check "--force removed stale per-origin file" test ! -e "$PREFIX.chloroplast.fasta"
+
+echo ">> checking very short reads (nhmmer cannot guess their alphabet)"
+for i in $(seq 1 50); do printf '>short_%s\nACGTACGT\n' "$i"; done > "$WORK/short.fasta"
+if "$BIN" -i "$WORK/short.fasta" -o "$WORK/out/short" --hmm-dir "$WORK/hmms" -t 2 >/dev/null 2>&1; then
+  check "short reads end up unclassified" test "$(nrec "$WORK/out/short.unclassified.fasta")" -eq 50
+else
+  echo "  FAIL: run on very short reads aborted"; fails=$((fails + 1))
+fi
+
 echo
 if [[ "$fails" -eq 0 ]]; then
   echo "ALL CHECKS PASSED"

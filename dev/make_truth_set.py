@@ -207,7 +207,6 @@ def main():
     erra = f" (~{args.error_rate:.1%} substitution error)" if args.error_rate > 0 else ""
     print(f"\n>> wrote {total} reads{frag}{erra} -> {reads_path}")
     print(f">> truth labels      -> {truth_path}")
-    print("\nSpot-check the reads, then run dev/run_benchmark.sh with --reads/--truth.")
 
 
 if __name__ == "__main__":
