@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use SSUplex, please cite it as below, and also cite Metaxa2, whose profiles and extraction approach SSUplex uses."
 title: "SSUplex: fast, both-strand extraction and origin-sorting of small-subunit rRNA"
 version: 0.2.0
+doi: 10.5281/zenodo.23246210
 date-released: 2026-10-08
 license: MIT
 repository-code: "https://github.com/ayobi/ssuplex"

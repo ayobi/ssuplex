@@ -3,6 +3,7 @@
 **Fast extraction and origin-sorting of small-subunit rRNA (16S/18S) from environmental sequencing reads.**
 
 [![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.07.02.736232-b31b1b)](https://doi.org/10.64898/2026.07.02.736232)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23246210.svg)](https://doi.org/10.5281/zenodo.23246210)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/ayobi/ssuplex/actions/workflows/ci.yml/badge.svg)](https://github.com/ayobi/ssuplex/actions/workflows/ci.yml)
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-b7410e?logo=rust&logoColor=white)](https://www.rust-lang.org/)
@@ -238,6 +239,9 @@ O'Brien A, Vargas Botia J, Acuña I, Restovic F, Martínez P, Parada P. SSUplex:
 fast, both-strand extraction and origin-sorting of small-subunit rRNA for
 environmental DNA metabarcoding. bioRxiv (2026).
 doi: [10.64898/2026.07.02.736232](https://doi.org/10.64898/2026.07.02.736232)
+
+Version 0.2.0 of the software is archived on Zenodo:
+doi: [10.5281/zenodo.23246210](https://doi.org/10.5281/zenodo.23246210)
 
 Please also cite Metaxa2, whose profiles and extraction approach SSUplex uses:
 
