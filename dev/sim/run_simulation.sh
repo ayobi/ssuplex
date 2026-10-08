@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Independent simulated benchmark, end to end:
-#   1. download SILVA 138.2 SSU and the RefSeq organelle genomes (fetch_sources.sh)
+#   1. download SILVA 138.2 SSU (and RefSeq organelle genomes if asked) (fetch_sources.sh)
 #   2. build labelled sources independent of the Metaxa2 database (build_sources.py)
 #   3. simulate full-length reads at three accuracy levels       (simulate_reads.py)
 #   4. run Metaxa2 and SSUplex on each set and score them        (../run_benchmark.sh)
@@ -14,11 +14,15 @@
 # Usage:
 #   dev/sim/run_simulation.sh --metaxa2-dir <Metaxa2_2.2.3> --out <dir> [--threads 16] \
 #       [--per-origin 2000] [--negatives 2000] [--reads-per-source 2] \
-#       [--profiles ont_r9,ont_r10,hifi_like] [--sim-env ssuplex-sim]
+#       [--profiles ont_r9,ont_r10,hifi_like] [--sim-env ssuplex-sim] \
+#       [--organelles silva|refseq]
+# Organelle sequences come from SILVA's mitochondrial and chloroplast entries by
+# default; --organelles refseq uses the SSU genes annotated in RefSeq organelle
+# genomes instead, which means downloading several GB from NCBI.
 set -euo pipefail
 
 M2DIR=""; OUT=""; THREADS=16; PER=2000; NEG=2000; RPS=2
-PROFILES="ont_r9,ont_r10,hifi_like"; SIMENV="ssuplex-sim"
+PROFILES="ont_r9,ont_r10,hifi_like"; SIMENV="ssuplex-sim"; ORGANELLES="silva"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --metaxa2-dir)      M2DIR="$2"; shift 2 ;;
@@ -29,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     --reads-per-source) RPS="$2"; shift 2 ;;
     --profiles)         PROFILES="$2"; shift 2 ;;
     --sim-env)          SIMENV="$2"; shift 2 ;;
+    --organelles)       ORGANELLES="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 1 ;;
   esac
 done
@@ -62,16 +67,18 @@ BIN="$ROOT/target/release/ssuplex"
 echo "=== 1/5 source databases ==="
 # Negatives come from the Metaxa2 LSU database when the download includes it;
 # otherwise SILVA's LSU set is downloaded too.
+FETCH=()
+[[ "$ORGANELLES" == refseq ]] && FETCH+=(--with-refseq)
 if ls "$DB/LSU/blast".n* >/dev/null 2>&1; then
-  bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" >/dev/null
+  bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" ${FETCH[@]+"${FETCH[@]}"} >/dev/null
   [[ -s "$OUT/metaxa2_lsu.fasta" ]] || fastacmd -d "$DB/LSU/blast" -D 1 > "$OUT/metaxa2_lsu.fasta"
   LSU="$OUT/metaxa2_lsu.fasta"; LSU_LABEL="Metaxa2 LSU"
 else
-  bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" --with-silva-lsu >/dev/null
+  bash "$ROOT/dev/sim/fetch_sources.sh" "$OUT/db" ${FETCH[@]+"${FETCH[@]}"} --with-silva-lsu >/dev/null
   LSU="$OUT/db/SILVA_138.2_LSURef_NR99_tax_silva.fasta.gz"; LSU_LABEL="SILVA LSU"
 fi
 tail -n +2 "$OUT/db/download_record.txt" | head -n 1
-echo "negatives from: $LSU_LABEL"
+echo "organelles from: $ORGANELLES; negatives from: $LSU_LABEL"
 
 echo "=== 2/5 sources independent of the Metaxa2 database ==="
 if [[ ! -s "$OUT/sources/sources.tsv" ]]; then
@@ -80,7 +87,7 @@ if [[ ! -s "$OUT/sources/sources.tsv" ]]; then
   "${SIM[@]}" python3 "$ROOT/dev/sim/build_sources.py" \
     --silva-ssu "$OUT/db/SILVA_138.2_SSURef_NR99_tax_silva.fasta.gz" \
     --lsu "$LSU" --lsu-label "$LSU_LABEL" \
-    --refseq "$OUT"/db/refseq/*.genomic.gbff.gz \
+    --organelles "$ORGANELLES" $([[ "$ORGANELLES" == refseq ]] && echo --refseq "$OUT"/db/refseq/*.genomic.gbff.gz) \
     --metaxa2-fasta "$OUT/metaxa2_ssu.fasta" --out "$OUT/sources" \
     --per-origin "$PER" --negatives "$NEG" --threads "$THREADS"
 fi

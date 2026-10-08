@@ -2,10 +2,12 @@
 """Build labelled SSU source sequences that are independent of the Metaxa2 database.
 
 Sources
-  bacteria, archaea, eukaryota  SILVA SSU Ref NR99 (nuclear 18S for eukaryota); SILVA
-                                entries labelled Chloroplast or Mitochondria are not used
-  mitochondria, chloroplast     SSU rRNA genes annotated in NCBI RefSeq mitochondrion
-                                and plastid genomes (plastid: chloroplasts only)
+  bacteria, archaea, eukaryota  SILVA SSU Ref NR99 (nuclear 18S for eukaryota)
+  mitochondria, chloroplast     --organelles silva (default): SILVA SSU Ref NR99 entries
+                                whose taxonomy is Mitochondria or Chloroplast;
+                                --organelles refseq: SSU rRNA genes annotated in NCBI
+                                RefSeq mitochondrion and plastid genomes (chloroplasts
+                                only), which needs the --refseq files
   negatives                     LSU sequences (by default from the Metaxa2 LSU database,
                                 which needs no independence because negatives only have to
                                 be non-SSU), plus composition-preserving shuffles of
@@ -96,14 +98,17 @@ class Reservoir:
                 self.items[j] = item
 
 
-def silva_ssu(path, excluded, pools):
+def silva_ssu(path, excluded, pools, organelles):
     skipped = defaultdict(int)
     for header, seq in read_fasta(path):
         acc_token, _, tax = header.partition(" ")
         if "Chloroplast" in tax or "Mitochondria" in tax:
-            skipped["organelle label"] += 1
-            continue
-        origin = {"Bacteria": "bacteria", "Archaea": "archaea", "Eukaryota": "eukaryota"}.get(tax.split(";")[0])
+            if not organelles:
+                skipped["organelle label"] += 1
+                continue
+            origin = "chloroplast" if "Chloroplast" in tax else "mitochondria"
+        else:
+            origin = {"Bacteria": "bacteria", "Archaea": "archaea", "Eukaryota": "eukaryota"}.get(tax.split(";")[0])
         if origin is None:
             continue
         if accession_root(acc_token) in excluded:
@@ -113,7 +118,8 @@ def silva_ssu(path, excluded, pools):
         if len(seq) < MIN_LEN[origin] or ambiguous_fraction(seq) > 0.005:
             skipped["too short or ambiguous"] += 1
             continue
-        pools[origin].add({"origin": origin, "subgroup": tax.split(";")[1] if ";" in tax else "",
+        subgroup = "SILVA" if origin in ("mitochondria", "chloroplast") else (tax.split(";")[1] if ";" in tax else "")
+        pools[origin].add({"origin": origin, "subgroup": subgroup,
                            "database": "SILVA SSU", "accession": acc_token, "seq": seq})
     log("SILVA SSU skipped: " + ", ".join(f"{k} {v}" for k, v in skipped.items()))
 
@@ -252,7 +258,9 @@ def main():
     ap.add_argument("--silva-ssu", required=True)
     ap.add_argument("--lsu", required=True, help="LSU sequences used as negatives (FASTA, optionally gzipped)")
     ap.add_argument("--lsu-label", default="LSU", help="source name recorded in negatives.tsv")
-    ap.add_argument("--refseq", nargs="+", required=True, help="RefSeq mitochondrion and plastid .gbff(.gz) files")
+    ap.add_argument("--organelles", choices=["silva", "refseq"], default="silva",
+                    help="source of mitochondrial and chloroplast sequences (default: silva)")
+    ap.add_argument("--refseq", nargs="*", default=[], help="RefSeq mitochondrion and plastid .gbff(.gz) files")
     ap.add_argument("--metaxa2-fasta", required=True, help="Metaxa2 SSU database sequences as FASTA")
     ap.add_argument("--out", required=True)
     ap.add_argument("--per-origin", type=int, default=2000)
@@ -269,8 +277,11 @@ def main():
 
     pool_k = a.per_origin * a.pool_factor
     pools = {o: Reservoir(pool_k, random.Random(f"{a.seed}-{o}")) for o in ORIGINS}
-    silva_ssu(a.silva_ssu, excluded, pools)
-    refseq_organelles(a.refseq, excluded, pools)
+    silva_ssu(a.silva_ssu, excluded, pools, organelles=(a.organelles == "silva"))
+    if a.organelles == "refseq":
+        if not a.refseq:
+            ap.error("--organelles refseq needs the --refseq files")
+        refseq_organelles(a.refseq, excluded, pools)
 
     chosen = []
     seen_seqs = set()
