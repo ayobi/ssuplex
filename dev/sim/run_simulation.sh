@@ -38,15 +38,24 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB="$(cd "$M2DIR" && pwd)/metaxa2_db"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
-SIM=(conda run --no-capture-output -n "$SIMENV")
-
 for tool in metaxa2 nhmmer fastacmd python3 curl; do
   command -v "$tool" >/dev/null 2>&1 || { echo "FAIL: '$tool' not on PATH (activate the benchmark environment)" >&2; exit 1; }
 done
-"${SIM[@]}" python3 -c "import badread, edlib" >/dev/null 2>&1 && "${SIM[@]}" vsearch --version >/dev/null 2>&1 || {
-  echo "FAIL: conda environment '$SIMENV' with badread and vsearch not found. Create it with:" >&2
+
+# 'conda' is usually a shell function, which scripts do not inherit; use the
+# executable that conda records in CONDA_EXE when an environment is activated.
+CONDA_BIN="${CONDA_EXE:-$(command -v conda || true)}"
+[[ -n "$CONDA_BIN" && -x "$CONDA_BIN" ]] || {
+  echo "FAIL: cannot find the conda executable (CONDA_EXE is not set and conda is not on PATH)" >&2; exit 1; }
+SIM=("$CONDA_BIN" run --no-capture-output -n "$SIMENV")
+"$CONDA_BIN" env list | awk '{print $1}' | grep -qx "$SIMENV" || {
+  echo "FAIL: conda environment '$SIMENV' not found. Create it with:" >&2
   echo "  conda create -y -n $SIMENV -c conda-forge -c bioconda python=3.12 badread vsearch" >&2
   exit 1; }
+if ! check="$("${SIM[@]}" python3 -c "import badread, edlib" 2>&1)"; then
+  echo "FAIL: badread or edlib cannot be imported in '$SIMENV':" >&2; echo "$check" >&2; exit 1
+fi
+"${SIM[@]}" vsearch --version >/dev/null 2>&1 || { echo "FAIL: vsearch does not run in '$SIMENV'" >&2; exit 1; }
 ( cd "$ROOT" && cargo build --release --locked --quiet )
 BIN="$ROOT/target/release/ssuplex"
 
