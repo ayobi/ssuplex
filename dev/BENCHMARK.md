@@ -27,6 +27,11 @@ Each harness writes a `versions.txt` recording the SSUplex version, the paths
 and versions of `nhmmer` and of the `hmmsearch` Metaxa2 uses, the Metaxa2
 version, and the machine.
 
+The results below were produced from the revision branch before its version
+number was raised to 0.2.0, so the logs report `ssuplex 0.1.0`; the source code
+(`src/`) is identical to the v0.2.0 release (`git diff dc18cab v0.2.0 -- src`
+shows no changes).
+
 Profiles are assembled from the same download as described in the README
 (`dev/assemble_metaxa2_hmms.sh Metaxa2_2.2.3/metaxa2_db hmms`).
 

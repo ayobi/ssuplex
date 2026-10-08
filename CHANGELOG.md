@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-10-08)
 
 ### Changed
 - The default origin-ranking statistic is now `sum` (previously `mean`). On
