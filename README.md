@@ -1,4 +1,13 @@
-# SSUplex
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="SSUplex@2x (1).png">
+    <img alt="SSUplex" src="SSUplex@2x (1).png" width="480">
+  </picture>
+</p>
+
+---
+<br>
+
 
 **Fast extraction and origin-sorting of small-subunit rRNA (16S/18S) from environmental sequencing reads.**
 
