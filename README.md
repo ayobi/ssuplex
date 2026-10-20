@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="emits-logo-dark.png">
-    <img alt="SSUplex" src="emits-logo-dark.png" width="480">
+    <source media="(prefers-color-scheme: dark)" srcset="ssuplex-logo-dark.png">
+    <img alt="SSUplex" src="ssuplex-logo-dark.png" width="480">
   </picture>
 </p>
 
